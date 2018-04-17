@@ -7,7 +7,7 @@ export class MoviesTable extends Component {
     render () {
         const { movies } = this.props;
         return (
-            <Table className="movies" bordered condensed hover>
+            <Table className="movies" striped>
                 <thead>
                     <tr>
                         <th></th>

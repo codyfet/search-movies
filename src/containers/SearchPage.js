@@ -1,16 +1,18 @@
 import React, { Component } from 'react';
-import { Grid, Row, InputGroup, FormControl, Button } from 'react-bootstrap';
-import axios from "axios";
+import { Grid, Row, Col, InputGroup, FormControl, Button } from 'react-bootstrap';
 import { MoviesTable } from '../components/MoviesTable.js';
 import { connect } from 'react-redux';
 import { createSearchMoviesStartAction, createSearchMoviesSuccessAction, createSearchMoviesFailureAction } from '../actions/actions.js';
+import { searchMovies } from '../services/service.js';
 import { PropTypes } from 'prop-types';
-
-const API_KEY = "37662c76ffc19e5cd1b95f37d77155fc";
+import Select from 'react-select';
 
 class SearchPage extends Component {
 
     state = {
+        format: null,
+        genre: null,
+        year: null,
         searchValue: "",
     }
 
@@ -27,11 +29,11 @@ class SearchPage extends Component {
      * Обработчки нажатия на кнопку "Найти".
      */
     handleButtonClick = () => {
-        const { searchValue } = this.state;
+        const { searchValue, year } = this.state;
 
         this.props.moviesSearchStart();
 
-        axios.get(`https://api.themoviedb.org/3/search/movie?api_key=${API_KEY}&language=ru-RU&query=${searchValue}&page=1&include_adult=false`)
+        searchMovies(searchValue, year)
             .then((response) => {
                 this.props.moviesSearchSuccess(response.data.results)
             })
@@ -41,29 +43,141 @@ class SearchPage extends Component {
 
     }
 
-    /**
-     * Рисует поле для поиска.
-     */
+    handleFormatChange = (option) => {
+        this.setState({
+            "format": option ? option.value : null
+        })
+    }
+
+    handleGenreChange = (option) => {
+        this.setState({
+            "genre": option ? option.value : null
+        })
+    }
+
+    handleYearChange = (option) => {
+        this.setState({
+            "year": option ? option.value : null
+        })
+    }
+
     renderSearchField = () => {
         return (
+            <InputGroup>
+                <FormControl
+                    className="searchField"
+                    type="text"
+                    value={this.state.searchValue}
+                    placeholder="Введите название фильма"
+                    onChange={this.handleInputChange}
+                />
+                <InputGroup.Button>
+                    <Button
+                        className="searchButton"
+                        onClick={this.handleButtonClick}
+                    >
+                        Найти
+            </Button>
+                </InputGroup.Button>
+            </InputGroup>
+        )
+    }
+
+    renderFormatFilter = () => {        
+        const options = [
+            {
+                label: "Кино",
+                value: "Кино"
+            },
+            {
+                label: "Сериал",
+                value: "Сериал"
+            }
+        ];
+
+        console.log(options.find(item => {console.log(item); return item.value === this.state.format}))
+
+        return (
+            <Select 
+                name="format"
+                placeholder="Выберите формат"
+                searchable={false}
+                options={options}
+                value={options.find(item => item.value === this.state.format)}
+                onChange={this.handleFormatChange}
+            />
+        )
+    }
+
+    renderGenreFilter = () => {
+        const options = [
+            {
+                label: "Триллер",
+                value: "Триллер"
+            },
+            {
+                label: "Боевик",
+                value: "Боевик"
+            },
+            {
+                label: "Мелодрамма",
+                value: "Мелодрамма"
+            }
+        ];
+        return (
+            <Select 
+                name="genre"
+                placeholder="Выберите жанр"
+                searchable={false}
+                options={options}
+                value={options.find(item => item.value === this.state.genre)}
+                onChange={this.handleGenreChange}
+            />
+        )
+    }
+
+    renderYearFilter = () => {
+        const options = [
+            {
+                label: "2000",
+                value: "2000"
+            },
+            {
+                label: "2001",
+                value: "2001"
+            },
+            {
+                label: "2001",
+                value: "2001"
+            }
+        ];
+        return (
+            <Select 
+                name="year"
+                placeholder="Выберите год"
+                searchable={false}
+                options={options}
+                value={options.find(item => item.value === this.state.year)}
+                onChange={this.handleYearChange}
+            />
+        )
+    }
+
+    renderFilters = () => {
+        return (
             <Row>
-                <InputGroup>
-                    <FormControl
-                        className="searchField"
-                        type="text"
-                        value={this.state.searchValue}
-                        placeholder="Введите название фильма"
-                        onChange={this.handleInputChange}
-                    />
-                    <InputGroup.Button>
-                        <Button
-                            className="searchButton"
-                            onClick={this.handleButtonClick}
-                        >
-                            Найти
-                    </Button>
-                    </InputGroup.Button>
-                </InputGroup>
+                <Col md={3}>
+                    {this.renderFormatFilter()}
+                </Col>
+                <Col md={3}>
+                    {this.renderGenreFilter()}
+                </Col>
+                <Col md={3}>
+                    {this.renderYearFilter()}
+                </Col>
+                <Col md={3}>
+                    {this.renderSearchField()}
+                </Col>
             </Row>
         )
     }
@@ -75,20 +189,20 @@ class SearchPage extends Component {
         const { movies, isLoading } = this.props;
         return (
             movies.length > 0 &&
-                (
-                    isLoading ? 
-                        <p>Идёт загрузка данных...</p> :
-                        <Row className="table-panel">
-                            <MoviesTable movies={movies} />
-                        </Row>
-                )
+            (
+                isLoading ?
+                    <p>Идёт загрузка данных...</p> :
+                    <Row className="table-panel">
+                        <MoviesTable movies={movies} />
+                    </Row>
+            )
         )
     }
 
     render = () => {
         return (
             <Grid>
-                {this.renderSearchField()}
+                {this.renderFilters()}
                 {this.renderTable()}
             </Grid>
         )
